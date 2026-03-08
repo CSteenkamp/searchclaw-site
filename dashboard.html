@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — SearchClaw</title>
-  <meta name="description" content="SearchClaw usage dashboard. Manage API keys, view usage, and monitor credits.">
+  <meta name="description" content="Manage your SearchClaw API keys, monitor usage, and view your account details.">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -28,277 +28,593 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+    .glow { box-shadow: 0 0 40px rgba(34, 211, 238, 0.15); }
+    .progress-bar {
+      background: linear-gradient(90deg, #22d3ee 0%, #818cf8 100%);
+    }
+    .tab-active {
+      color: #22d3ee;
+      border-bottom-color: #22d3ee;
+    }
   </style>
 </head>
-<body class="bg-dark text-gray-100 min-h-screen">
+<body class="bg-dark text-gray-200 antialiased">
+
   <!-- Nav -->
-  <nav class="border-b border-gray-800 bg-darker/80 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-      <a href="/" class="text-2xl font-bold gradient-text">SearchClaw</a>
-      <div class="flex items-center gap-6">
-        <a href="/docs.html" class="text-gray-400 hover:text-white transition">Docs</a>
-        <a href="/playground.html" class="text-gray-400 hover:text-white transition">Playground</a>
-        <a href="/dashboard.html" class="text-accent font-medium">Dashboard</a>
+  <nav class="fixed top-0 w-full bg-dark/80 backdrop-blur-md border-b border-white/5 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="index.html" class="text-xl font-bold text-white flex items-center gap-2">
+        <svg class="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+        SearchClaw
+      </a>
+      <div class="hidden md:flex items-center gap-8 text-sm">
+        <a href="index.html" class="text-gray-400 hover:text-white transition">Home</a>
+        <a href="docs.html" class="text-gray-400 hover:text-white transition">Docs</a>
+        <a href="playground.html" class="text-gray-400 hover:text-white transition">Playground</a>
+        <a href="dashboard.html" class="text-white font-medium">Dashboard</a>
       </div>
+      <a href="index.html#pricing" class="bg-accent hover:bg-accentHover text-dark font-semibold px-4 py-2 rounded-lg text-sm transition">Get API Key</a>
     </div>
   </nav>
 
-  <main class="max-w-7xl mx-auto px-6 py-12">
-    <!-- Auth Section (shown when not logged in) -->
-    <div id="auth-section">
-      <div class="max-w-md mx-auto bg-card rounded-xl p-8 border border-gray-700">
-        <h2 class="text-2xl font-bold mb-6 text-center">Sign In</h2>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm text-gray-400 mb-1">Email</label>
-            <input type="email" id="login-email" class="w-full bg-darker border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-accent focus:outline-none" placeholder="you@example.com">
-          </div>
-          <div>
-            <label class="block text-sm text-gray-400 mb-1">Password</label>
-            <input type="password" id="login-password" class="w-full bg-darker border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-accent focus:outline-none" placeholder="Password">
-          </div>
-          <button onclick="login()" class="w-full bg-accent hover:bg-accentHover text-black font-semibold rounded-lg px-4 py-2.5 transition">Sign In</button>
-          <p class="text-center text-gray-500 text-sm">Don't have an account? <a href="#" onclick="showRegister()" class="text-accent hover:underline">Register</a></p>
-        </div>
-        <div id="login-error" class="hidden mt-4 text-red-400 text-sm text-center"></div>
+  <!-- Auth Gate -->
+  <section id="auth-section" class="pt-32 pb-20 px-6">
+    <div class="max-w-md mx-auto">
+      <h1 class="text-3xl font-bold text-white text-center mb-2">Sign In</h1>
+      <p class="text-gray-400 text-center mb-8">Access your SearchClaw dashboard</p>
+
+      <!-- Auth Tabs -->
+      <div class="flex border-b border-white/10 mb-6">
+        <button id="tab-apikey" onclick="switchAuthTab('apikey')" class="flex-1 pb-3 text-sm font-medium border-b-2 tab-active transition">API Key</button>
+        <button id="tab-email" onclick="switchAuthTab('email')" class="flex-1 pb-3 text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-white transition">Email Login</button>
+      </div>
+
+      <!-- Error Message -->
+      <div id="auth-error" class="hidden bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-4"></div>
+
+      <!-- API Key Login -->
+      <div id="form-apikey">
+        <label class="block text-sm text-gray-400 mb-2">API Key</label>
+        <input id="input-apikey" type="text" placeholder="sc_live_..." class="w-full bg-darker border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-accent/50 mb-4">
+        <button onclick="loginWithApiKey()" class="w-full bg-accent hover:bg-accentHover text-dark font-semibold py-3 rounded-lg transition">Connect</button>
+      </div>
+
+      <!-- Email Login -->
+      <div id="form-email" class="hidden">
+        <label class="block text-sm text-gray-400 mb-2">Email</label>
+        <input id="input-email" type="email" placeholder="you@example.com" class="w-full bg-darker border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-accent/50 mb-4">
+        <label class="block text-sm text-gray-400 mb-2">Password</label>
+        <input id="input-password" type="password" placeholder="Your password" class="w-full bg-darker border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-accent/50 mb-4">
+        <button onclick="loginWithEmail()" class="w-full bg-accent hover:bg-accentHover text-dark font-semibold py-3 rounded-lg transition">Sign In</button>
+        <p class="text-center text-sm text-gray-400 mt-4">Don't have an account? <a href="index.html#signup" class="text-accent hover:text-accentHover transition">Sign up</a></p>
       </div>
     </div>
+  </section>
 
-    <!-- Dashboard Section (shown when logged in) -->
-    <div id="dashboard-section" class="hidden">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h1 class="text-3xl font-bold">Dashboard</h1>
-          <p class="text-gray-400 mt-1">Manage your API keys and monitor usage</p>
+  <!-- Dashboard (hidden until authenticated) -->
+  <section id="dashboard-section" class="pt-24 pb-20 px-6 hidden">
+    <div class="max-w-6xl mx-auto">
+
+      <!-- Header Row -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        <div class="flex items-center gap-4">
+          <h1 class="text-3xl font-bold text-white">Dashboard</h1>
+          <span id="plan-badge" class="bg-accent/10 text-accent text-xs font-semibold px-3 py-1 rounded-full"></span>
         </div>
-        <button onclick="logout()" class="text-gray-400 hover:text-white transition text-sm">Sign Out</button>
+        <button onclick="logout()" class="text-gray-400 hover:text-white text-sm border border-white/10 rounded-lg px-4 py-2 transition">Logout</button>
       </div>
 
-      <!-- Plan & Usage -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div class="bg-card rounded-xl p-6 border border-gray-700">
-          <p class="text-gray-400 text-sm">Current Plan</p>
-          <p id="plan-name" class="text-2xl font-bold mt-1 capitalize">—</p>
-          <a href="#plans" class="text-accent text-sm hover:underline mt-2 inline-block">Upgrade</a>
-        </div>
-        <div class="bg-card rounded-xl p-6 border border-gray-700">
-          <p class="text-gray-400 text-sm">Credits Used</p>
-          <p id="credits-used" class="text-2xl font-bold mt-1">—</p>
-          <p id="credits-limit" class="text-gray-500 text-sm mt-1">of — credits</p>
-        </div>
-        <div class="bg-card rounded-xl p-6 border border-gray-700">
-          <p class="text-gray-400 text-sm">Credits Remaining</p>
-          <p id="credits-remaining" class="text-2xl font-bold mt-1 text-green-400">—</p>
-          <p id="billing-period" class="text-gray-500 text-sm mt-1">—</p>
-        </div>
+      <!-- Loading State -->
+      <div id="dashboard-loading" class="text-center py-20">
+        <div class="inline-block w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div>
+        <p class="text-gray-400 mt-4">Loading dashboard...</p>
       </div>
 
-      <!-- Usage by Endpoint -->
-      <div class="bg-card rounded-xl p-6 border border-gray-700 mb-10">
-        <h2 class="text-xl font-semibold mb-4">Usage by Endpoint</h2>
-        <div class="space-y-3" id="usage-bars">
-          <div class="flex items-center gap-4">
-            <span class="text-sm text-gray-400 w-24">Search</span>
-            <div class="flex-1 bg-darker rounded-full h-4 overflow-hidden">
-              <div id="bar-search" class="bg-cyan-500 h-full rounded-full transition-all" style="width: 0%"></div>
+      <!-- Dashboard Error -->
+      <div id="dashboard-error" class="hidden bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-6"></div>
+
+      <!-- Dashboard Content -->
+      <div id="dashboard-content" class="hidden">
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <!-- Plan Card -->
+          <div class="bg-card rounded-xl border border-white/5 p-6">
+            <div class="text-gray-400 text-sm mb-1">Plan</div>
+            <div id="stat-plan" class="text-2xl font-bold text-white mb-2">--</div>
+            <div class="text-gray-500 text-sm">Rate limit: <span id="stat-rate" class="text-gray-300">--</span> req/s</div>
+          </div>
+          <!-- Credits Used Card -->
+          <div class="bg-card rounded-xl border border-white/5 p-6">
+            <div class="text-gray-400 text-sm mb-1">Credits Used</div>
+            <div class="text-2xl font-bold text-white mb-2"><span id="stat-used">--</span> <span class="text-gray-500 text-base font-normal">/ <span id="stat-total">--</span></span></div>
+            <div class="w-full bg-darker rounded-full h-2 mt-2">
+              <div id="stat-progress" class="progress-bar h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
             </div>
-            <span id="val-search" class="text-sm text-gray-400 w-16 text-right">0</span>
           </div>
-          <div class="flex items-center gap-4">
-            <span class="text-sm text-gray-400 w-24">Extract</span>
-            <div class="flex-1 bg-darker rounded-full h-4 overflow-hidden">
-              <div id="bar-extract" class="bg-indigo-500 h-full rounded-full transition-all" style="width: 0%"></div>
-            </div>
-            <span id="val-extract" class="text-sm text-gray-400 w-16 text-right">0</span>
-          </div>
-          <div class="flex items-center gap-4">
-            <span class="text-sm text-gray-400 w-24">Crawl</span>
-            <div class="flex-1 bg-darker rounded-full h-4 overflow-hidden">
-              <div id="bar-crawl" class="bg-purple-500 h-full rounded-full transition-all" style="width: 0%"></div>
-            </div>
-            <span id="val-crawl" class="text-sm text-gray-400 w-16 text-right">0</span>
-          </div>
-          <div class="flex items-center gap-4">
-            <span class="text-sm text-gray-400 w-24">Pipeline</span>
-            <div class="flex-1 bg-darker rounded-full h-4 overflow-hidden">
-              <div id="bar-pipeline" class="bg-pink-500 h-full rounded-full transition-all" style="width: 0%"></div>
-            </div>
-            <span id="val-pipeline" class="text-sm text-gray-400 w-16 text-right">0</span>
+          <!-- Credits Remaining Card -->
+          <div class="bg-card rounded-xl border border-white/5 p-6">
+            <div class="text-gray-400 text-sm mb-1">Credits Remaining</div>
+            <div id="stat-remaining" class="text-2xl font-bold text-white mb-2">--</div>
+            <div class="text-gray-500 text-sm"><span id="stat-period">--</span></div>
           </div>
         </div>
-      </div>
 
-      <!-- API Keys -->
-      <div class="bg-card rounded-xl p-6 border border-gray-700 mb-10">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-semibold">API Keys</h2>
-          <button onclick="createKey()" class="bg-accent hover:bg-accentHover text-black font-semibold rounded-lg px-4 py-2 text-sm transition">Create New Key</button>
+        <!-- Usage Chart -->
+        <div class="bg-card rounded-xl border border-white/5 p-6 mb-8">
+          <h2 class="text-lg font-semibold text-white mb-4">Usage</h2>
+          <div id="usage-chart"></div>
         </div>
-        <div id="api-keys-list" class="space-y-3">
-          <p class="text-gray-500 text-sm">No API keys yet. Create one to get started.</p>
-        </div>
-      </div>
 
-      <!-- Recent API Calls -->
-      <div class="bg-card rounded-xl p-6 border border-gray-700 mb-10">
-        <h2 class="text-xl font-semibold mb-4">Recent API Calls</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="text-gray-400 border-b border-gray-700">
-                <th class="text-left py-2 pr-4">Endpoint</th>
-                <th class="text-left py-2 pr-4">Credits</th>
-                <th class="text-left py-2 pr-4">Cached</th>
-                <th class="text-left py-2 pr-4">Response Time</th>
-                <th class="text-left py-2">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody id="recent-calls">
-              <tr><td colspan="5" class="text-gray-500 py-4">No recent API calls.</td></tr>
-            </tbody>
-          </table>
+        <!-- API Keys Section -->
+        <div class="bg-card rounded-xl border border-white/5 p-6 mb-8">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-white">API Keys</h2>
+            <button onclick="createNewKey()" class="bg-accent hover:bg-accentHover text-dark text-sm font-semibold px-4 py-2 rounded-lg transition">Create New Key</button>
+          </div>
+          <div id="keys-loading" class="text-center py-8">
+            <div class="inline-block w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div>
+          </div>
+          <div id="keys-list" class="hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-gray-400 text-left border-b border-white/5">
+                    <th class="pb-3 font-medium">Key</th>
+                    <th class="pb-3 font-medium">Name</th>
+                    <th class="pb-3 font-medium hidden sm:table-cell">Created</th>
+                    <th class="pb-3 font-medium hidden sm:table-cell">Last Used</th>
+                    <th class="pb-3 font-medium text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="keys-tbody"></tbody>
+              </table>
+            </div>
+            <div id="keys-empty" class="hidden text-center py-8 text-gray-500">No API keys found. Create one to get started.</div>
+          </div>
         </div>
-      </div>
 
-      <!-- Pricing Plans -->
-      <div id="plans" class="mb-10">
-        <h2 class="text-xl font-semibold mb-6">Upgrade Plan</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="bg-card rounded-xl p-6 border border-gray-700">
-            <h3 class="font-bold text-lg">Free</h3>
-            <p class="text-3xl font-bold mt-2">$0<span class="text-sm text-gray-400">/mo</span></p>
-            <p class="text-gray-400 text-sm mt-2">1,000 credits/mo</p>
-            <p class="text-gray-400 text-sm">1 req/s</p>
-          </div>
-          <div class="bg-card rounded-xl p-6 border border-cyan-600">
-            <h3 class="font-bold text-lg">Starter</h3>
-            <p class="text-3xl font-bold mt-2">$10<span class="text-sm text-gray-400">/mo</span></p>
-            <p class="text-gray-400 text-sm mt-2">15,000 credits/mo</p>
-            <p class="text-gray-400 text-sm">5 req/s</p>
-          </div>
-          <div class="bg-card rounded-xl p-6 border border-indigo-500">
-            <h3 class="font-bold text-lg">Pro</h3>
-            <p class="text-3xl font-bold mt-2">$50<span class="text-sm text-gray-400">/mo</span></p>
-            <p class="text-gray-400 text-sm mt-2">100,000 credits/mo</p>
-            <p class="text-gray-400 text-sm">20 req/s</p>
-          </div>
-          <div class="bg-card rounded-xl p-6 border border-purple-500">
-            <h3 class="font-bold text-lg">Scale</h3>
-            <p class="text-3xl font-bold mt-2">$200<span class="text-sm text-gray-400">/mo</span></p>
-            <p class="text-gray-400 text-sm mt-2">500,000 credits/mo</p>
-            <p class="text-gray-400 text-sm">50 req/s</p>
+        <!-- Quick Links -->
+        <div class="mb-8">
+          <h2 class="text-lg font-semibold text-white mb-4">Quick Links</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="docs.html" class="bg-card rounded-xl border border-white/5 p-5 hover:border-accent/30 transition group">
+              <div class="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center mb-3">
+                <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              </div>
+              <div class="text-white font-medium group-hover:text-accent transition">API Documentation</div>
+              <div class="text-gray-500 text-sm mt-1">Explore endpoints and guides</div>
+            </a>
+            <a href="playground.html" class="bg-card rounded-xl border border-white/5 p-5 hover:border-accent/30 transition group">
+              <div class="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center mb-3">
+                <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"/></svg>
+              </div>
+              <div class="text-white font-medium group-hover:text-accent transition">Test Endpoints</div>
+              <div class="text-gray-500 text-sm mt-1">Try the API in your browser</div>
+            </a>
+            <a href="index.html#pricing" class="bg-card rounded-xl border border-white/5 p-5 hover:border-accent/30 transition group">
+              <div class="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center mb-3">
+                <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
+              </div>
+              <div class="text-white font-medium group-hover:text-accent transition">View Plans</div>
+              <div class="text-gray-500 text-sm mt-1">Compare pricing and billing</div>
+            </a>
+            <a href="mailto:hello@searchclaw.dev" class="bg-card rounded-xl border border-white/5 p-5 hover:border-accent/30 transition group">
+              <div class="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center mb-3">
+                <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+              </div>
+              <div class="text-white font-medium group-hover:text-accent transition">Get Help</div>
+              <div class="text-gray-500 text-sm mt-1">Contact support</div>
+            </a>
           </div>
         </div>
       </div>
     </div>
-  </main>
+  </section>
+
+  <!-- New Key Modal -->
+  <div id="key-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+    <div class="bg-card border border-white/10 rounded-xl max-w-lg w-full p-6">
+      <h3 class="text-lg font-semibold text-white mb-2">Your New API Key</h3>
+      <p class="text-gray-400 text-sm mb-4">Copy this key now. You will not be able to see it again.</p>
+      <div class="flex items-center gap-2 mb-6">
+        <code id="modal-key-value" class="flex-1 bg-darker border border-white/10 rounded-lg px-4 py-3 text-accent text-sm font-mono break-all"></code>
+        <button onclick="copyModalKey()" id="modal-copy-btn" class="bg-accent hover:bg-accentHover text-dark font-semibold px-4 py-3 rounded-lg text-sm transition whitespace-nowrap">Copy</button>
+      </div>
+      <button onclick="closeKeyModal()" class="w-full border border-white/10 text-gray-300 hover:text-white py-2 rounded-lg transition text-sm">Done</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/5 py-10 px-6">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="text-gray-500 text-sm">&copy; 2026 SearchClaw. All rights reserved.</div>
+      <div class="flex gap-6 text-sm text-gray-500">
+        <a href="docs.html" class="hover:text-white transition">Docs</a>
+        <a href="playground.html" class="hover:text-white transition">Playground</a>
+        <a href="privacy.html" class="hover:text-white transition">Privacy</a>
+        <a href="terms.html" class="hover:text-white transition">Terms</a>
+      </div>
+    </div>
+  </footer>
 
   <script>
-    const BASE = window.location.origin + '/v1';
+    const API_BASE = 'https://api.searchclaw.dev';
+    const STORAGE_KEY = 'sc_dashboard_key';
+    let refreshInterval = null;
 
-    function getToken() { return localStorage.getItem('dc_token'); }
-    function setToken(t) { localStorage.setItem('dc_token', t); }
-    function clearToken() { localStorage.removeItem('dc_token'); }
-
-    async function apiFetch(path, opts = {}) {
-      const token = getToken();
-      const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
-      if (token) headers['Authorization'] = 'Bearer ' + token;
-      const res = await fetch(BASE + path, { ...opts, headers });
-      if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
-      return res.json();
-    }
-
-    async function login() {
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-      try {
-        const data = await apiFetch('/auth/login', {
-          method: 'POST', body: JSON.stringify({ email, password })
-        });
-        setToken(data.access_token);
+    // ---- Init ----
+    function init() {
+      const key = localStorage.getItem(STORAGE_KEY);
+      if (key) {
         showDashboard();
-      } catch (e) {
-        const el = document.getElementById('login-error');
-        el.textContent = e.message;
-        el.classList.remove('hidden');
+      } else {
+        showAuth();
       }
     }
 
-    function showRegister() {
-      window.location.href = '/docs.html#auth';
+    // ---- Auth Tab Switching ----
+    function switchAuthTab(tab) {
+      const tabApiKey = document.getElementById('tab-apikey');
+      const tabEmail = document.getElementById('tab-email');
+      const formApiKey = document.getElementById('form-apikey');
+      const formEmail = document.getElementById('form-email');
+      const authError = document.getElementById('auth-error');
+      authError.classList.add('hidden');
+
+      if (tab === 'apikey') {
+        tabApiKey.className = 'flex-1 pb-3 text-sm font-medium border-b-2 tab-active transition';
+        tabEmail.className = 'flex-1 pb-3 text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-white transition';
+        formApiKey.classList.remove('hidden');
+        formEmail.classList.add('hidden');
+      } else {
+        tabEmail.className = 'flex-1 pb-3 text-sm font-medium border-b-2 tab-active transition';
+        tabApiKey.className = 'flex-1 pb-3 text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-white transition';
+        formEmail.classList.remove('hidden');
+        formApiKey.classList.add('hidden');
+      }
+    }
+
+    // ---- Auth: API Key Login ----
+    async function loginWithApiKey() {
+      const key = document.getElementById('input-apikey').value.trim();
+      if (!key) return showAuthError('Please enter an API key.');
+
+      try {
+        const res = await fetch(API_BASE + '/v1/usage', {
+          headers: { 'X-API-Key': key }
+        });
+        if (!res.ok) throw new Error('Invalid API key or request failed.');
+        localStorage.setItem(STORAGE_KEY, key);
+        showDashboard();
+      } catch (e) {
+        showAuthError(e.message || 'Failed to validate API key.');
+      }
+    }
+
+    // ---- Auth: Email Login ----
+    async function loginWithEmail() {
+      const email = document.getElementById('input-email').value.trim();
+      const password = document.getElementById('input-password').value;
+      if (!email || !password) return showAuthError('Please enter both email and password.');
+
+      try {
+        const loginRes = await fetch(API_BASE + '/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        if (!loginRes.ok) {
+          const errData = await loginRes.json().catch(() => ({}));
+          throw new Error(errData.message || errData.detail || 'Invalid email or password.');
+        }
+        const loginData = await loginRes.json();
+        const token = loginData.access_token;
+
+        const keysRes = await fetch(API_BASE + '/v1/auth/keys', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!keysRes.ok) throw new Error('Failed to retrieve API keys.');
+        const keysData = await keysRes.json();
+        const keys = keysData.keys || keysData;
+
+        if (Array.isArray(keys) && keys.length > 0) {
+          const apiKey = keys[0].key || keys[0].key_prefix || '';
+          if (apiKey) {
+            localStorage.setItem(STORAGE_KEY, apiKey);
+            showDashboard();
+            return;
+          }
+        }
+        throw new Error('No API keys found on your account.');
+      } catch (e) {
+        showAuthError(e.message || 'Login failed.');
+      }
+    }
+
+    function showAuthError(msg) {
+      const el = document.getElementById('auth-error');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    // ---- Show / Hide Sections ----
+    function showAuth() {
+      document.getElementById('auth-section').classList.remove('hidden');
+      document.getElementById('dashboard-section').classList.add('hidden');
+      if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
+    }
+
+    function showDashboard() {
+      document.getElementById('auth-section').classList.add('hidden');
+      document.getElementById('dashboard-section').classList.remove('hidden');
+      document.getElementById('dashboard-loading').classList.remove('hidden');
+      document.getElementById('dashboard-content').classList.add('hidden');
+      document.getElementById('dashboard-error').classList.add('hidden');
+      loadDashboardData();
+      if (refreshInterval) clearInterval(refreshInterval);
+      refreshInterval = setInterval(loadDashboardData, 60000);
     }
 
     function logout() {
-      clearToken();
-      document.getElementById('auth-section').classList.remove('hidden');
-      document.getElementById('dashboard-section').classList.add('hidden');
+      localStorage.removeItem(STORAGE_KEY);
+      if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
+      showAuth();
     }
 
-    async function showDashboard() {
-      document.getElementById('auth-section').classList.add('hidden');
-      document.getElementById('dashboard-section').classList.remove('hidden');
-      try {
-        const usage = await apiFetch('/usage');
-        document.getElementById('plan-name').textContent = usage.plan;
-        document.getElementById('credits-used').textContent = usage.credits_used.toLocaleString();
-        document.getElementById('credits-limit').textContent = 'of ' + usage.credits_limit.toLocaleString() + ' credits';
-        document.getElementById('credits-remaining').textContent = usage.credits_remaining.toLocaleString();
-        document.getElementById('billing-period').textContent = 'Period: ' + usage.billing_period;
-      } catch (e) {
-        logout();
-      }
-    }
+    // ---- Load Dashboard Data ----
+    async function loadDashboardData() {
+      const key = localStorage.getItem(STORAGE_KEY);
+      if (!key) { logout(); return; }
 
-    async function createKey() {
-      const name = prompt('Key name (optional):') || 'default';
       try {
-        const data = await apiFetch('/auth/keys', {
-          method: 'POST', body: JSON.stringify({ name })
+        const res = await fetch(API_BASE + '/v1/usage', {
+          headers: { 'X-API-Key': key }
         });
-        alert('New API Key (copy now — shown only once):\n\n' + data.api_key);
-        loadKeys();
-      } catch (e) {
-        alert('Error: ' + e.message);
-      }
-    }
-
-    async function loadKeys() {
-      try {
-        const data = await apiFetch('/auth/keys');
-        const list = document.getElementById('api-keys-list');
-        if (!data.keys || data.keys.length === 0) {
-          list.innerHTML = '<p class="text-gray-500 text-sm">No API keys yet.</p>';
+        if (res.status === 401) {
+          localStorage.removeItem(STORAGE_KEY);
+          showAuth();
           return;
         }
-        list.innerHTML = data.keys.map(k => `
-          <div class="flex items-center justify-between bg-darker rounded-lg px-4 py-3">
-            <div>
-              <span class="font-mono text-sm">${k.key_prefix}...</span>
-              <span class="text-gray-500 text-sm ml-2">${k.name}</span>
-            </div>
-            <button onclick="revokeKey(${k.id})" class="text-red-400 hover:text-red-300 text-sm">Revoke</button>
-          </div>
-        `).join('');
-      } catch (e) { /* ignore */ }
+        if (!res.ok) throw new Error('Failed to load usage data.');
+        const data = await res.json();
+        renderUsageData(data);
+        document.getElementById('dashboard-loading').classList.add('hidden');
+        document.getElementById('dashboard-content').classList.remove('hidden');
+        document.getElementById('dashboard-error').classList.add('hidden');
+      } catch (e) {
+        document.getElementById('dashboard-loading').classList.add('hidden');
+        const errEl = document.getElementById('dashboard-error');
+        errEl.textContent = e.message || 'Failed to load dashboard data.';
+        errEl.classList.remove('hidden');
+        document.getElementById('dashboard-content').classList.remove('hidden');
+      }
+
+      loadApiKeys();
+    }
+
+    // ---- Render Usage Data ----
+    function renderUsageData(data) {
+      const plan = data.plan || data.plan_name || 'Free';
+      const rateLimit = data.rate_limit || data.requests_per_second || '--';
+      const used = data.credits_used ?? data.used ?? 0;
+      const total = data.credits_total ?? data.total ?? data.credits_limit ?? 0;
+      const remaining = data.credits_remaining ?? (total - used);
+      const periodStart = data.period_start || data.billing_period_start || '';
+      const periodEnd = data.period_end || data.billing_period_end || '';
+      const pct = total > 0 ? Math.min((used / total) * 100, 100) : 0;
+
+      document.getElementById('plan-badge').textContent = plan;
+      document.getElementById('stat-plan').textContent = plan;
+      document.getElementById('stat-rate').textContent = rateLimit;
+      document.getElementById('stat-used').textContent = used.toLocaleString();
+      document.getElementById('stat-total').textContent = total.toLocaleString();
+      document.getElementById('stat-progress').style.width = pct + '%';
+      document.getElementById('stat-remaining').textContent = remaining.toLocaleString();
+
+      if (periodStart && periodEnd) {
+        document.getElementById('stat-period').textContent = formatDate(periodStart) + ' \u2014 ' + formatDate(periodEnd);
+      } else {
+        document.getElementById('stat-period').textContent = 'Current billing period';
+      }
+
+      renderUsageChart(data, used, total, pct);
+    }
+
+    function formatDate(d) {
+      try {
+        return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      } catch (e) { return d; }
+    }
+
+    // ---- Usage Chart ----
+    function renderUsageChart(data, used, total, pct) {
+      const container = document.getElementById('usage-chart');
+      const daily = data.daily_usage || data.daily || null;
+
+      if (daily && Array.isArray(daily) && daily.length > 0) {
+        const maxVal = Math.max(...daily.map(function(d) { return d.credits || d.count || d.value || 0; }), 1);
+        let html = '<div class="flex items-end gap-1 h-48">';
+        daily.forEach(function(d) {
+          const val = d.credits || d.count || d.value || 0;
+          const heightPct = (val / maxVal) * 100;
+          const label = d.date || d.day || '';
+          html += '<div class="flex-1 flex flex-col items-center justify-end h-full">';
+          html += '<div class="text-xs text-gray-400 mb-1">' + val.toLocaleString() + '</div>';
+          html += '<div class="w-full rounded-t" style="height:' + Math.max(heightPct, 2) + '%;background:linear-gradient(180deg,#22d3ee 0%,#818cf8 100%)"></div>';
+          html += '<div class="text-xs text-gray-500 mt-1 truncate w-full text-center">' + escapeHtml(label) + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      } else {
+        var usedWidth = pct;
+        var remainingWidth = 100 - pct;
+        container.innerHTML =
+          '<div class="flex items-center gap-4 mb-3">' +
+            '<span class="text-sm text-gray-400">Credits used</span>' +
+            '<span class="text-sm text-white font-medium">' + used.toLocaleString() + ' / ' + total.toLocaleString() + '</span>' +
+            '<span class="text-sm text-gray-500">(' + pct.toFixed(1) + '%)</span>' +
+          '</div>' +
+          '<div class="w-full h-10 bg-darker rounded-lg overflow-hidden flex">' +
+            '<div class="h-full transition-all duration-500 rounded-l-lg" style="width:' + usedWidth + '%;background:linear-gradient(90deg,#22d3ee 0%,#818cf8 100%)"></div>' +
+            '<div class="h-full bg-darker" style="width:' + remainingWidth + '%"></div>' +
+          '</div>' +
+          '<div class="flex justify-between mt-2 text-xs text-gray-500">' +
+            '<span>Used</span>' +
+            '<span>Remaining: ' + (total - used).toLocaleString() + '</span>' +
+          '</div>';
+      }
+    }
+
+    // ---- API Keys ----
+    async function loadApiKeys() {
+      const key = localStorage.getItem(STORAGE_KEY);
+      if (!key) return;
+
+      var loadingEl = document.getElementById('keys-loading');
+      var listEl = document.getElementById('keys-list');
+      var tbodyEl = document.getElementById('keys-tbody');
+      var emptyEl = document.getElementById('keys-empty');
+
+      try {
+        const res = await fetch(API_BASE + '/v1/auth/keys', {
+          headers: { 'X-API-Key': key }
+        });
+        if (!res.ok) throw new Error('Failed to load API keys.');
+        const data = await res.json();
+        const keys = data.keys || data || [];
+
+        loadingEl.classList.add('hidden');
+        listEl.classList.remove('hidden');
+
+        if (!Array.isArray(keys) || keys.length === 0) {
+          tbodyEl.innerHTML = '';
+          emptyEl.classList.remove('hidden');
+          return;
+        }
+
+        emptyEl.classList.add('hidden');
+        tbodyEl.innerHTML = keys.map(function(k) {
+          var prefix = k.key_prefix || k.key || '--';
+          var name = k.name || '--';
+          var created = k.created_at ? formatDate(k.created_at) : '--';
+          var lastUsed = k.last_used ? formatDate(k.last_used) : 'Never';
+          var id = k.id || k.key_id || '';
+          return '<tr class="border-b border-white/5">' +
+            '<td class="py-3 pr-4"><code class="text-accent/80 text-xs font-mono">' + escapeHtml(prefix) + '</code></td>' +
+            '<td class="py-3 pr-4 text-gray-300">' + escapeHtml(name) + '</td>' +
+            '<td class="py-3 pr-4 text-gray-500 hidden sm:table-cell">' + created + '</td>' +
+            '<td class="py-3 pr-4 text-gray-500 hidden sm:table-cell">' + lastUsed + '</td>' +
+            '<td class="py-3 text-right"><button onclick="revokeKey(\'' + escapeHtml(String(id)) + '\')" class="text-red-400 hover:text-red-300 text-xs transition">Revoke</button></td>' +
+            '</tr>';
+        }).join('');
+      } catch (e) {
+        loadingEl.classList.add('hidden');
+        listEl.classList.remove('hidden');
+        emptyEl.textContent = 'Failed to load API keys.';
+        emptyEl.classList.remove('hidden');
+      }
+    }
+
+    async function createNewKey() {
+      var name = prompt('Enter a name for this key (optional):');
+      var key = localStorage.getItem(STORAGE_KEY);
+      if (!key) return;
+
+      try {
+        var body = {};
+        if (name) body.name = name;
+        var res = await fetch(API_BASE + '/v1/auth/keys', {
+          method: 'POST',
+          headers: { 'X-API-Key': key, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error('Failed to create key.');
+        var data = await res.json();
+        var newKey = data.key || data.api_key || data.secret || '';
+
+        if (newKey) {
+          showKeyModal(newKey);
+        } else {
+          alert('Key created, but the full key was not returned.');
+        }
+        loadApiKeys();
+      } catch (e) {
+        alert(e.message || 'Failed to create API key.');
+      }
     }
 
     async function revokeKey(id) {
-      if (!confirm('Revoke this API key?')) return;
+      if (!id) return;
+      if (!confirm('Are you sure you want to revoke this API key? This cannot be undone.')) return;
+
+      var key = localStorage.getItem(STORAGE_KEY);
+      if (!key) return;
+
       try {
-        await apiFetch('/auth/keys/' + id, { method: 'DELETE' });
-        loadKeys();
+        var res = await fetch(API_BASE + '/v1/auth/keys/' + encodeURIComponent(id), {
+          method: 'DELETE',
+          headers: { 'X-API-Key': key }
+        });
+        if (!res.ok) throw new Error('Failed to revoke key.');
+        loadApiKeys();
       } catch (e) {
-        alert('Error: ' + e.message);
+        alert(e.message || 'Failed to revoke key.');
       }
     }
 
-    // Init
-    if (getToken()) {
-      showDashboard();
-      loadKeys();
+    // ---- Key Modal ----
+    function showKeyModal(keyValue) {
+      document.getElementById('modal-key-value').textContent = keyValue;
+      document.getElementById('key-modal').classList.remove('hidden');
     }
+
+    function closeKeyModal() {
+      document.getElementById('key-modal').classList.add('hidden');
+    }
+
+    function copyModalKey() {
+      var keyText = document.getElementById('modal-key-value').textContent;
+      navigator.clipboard.writeText(keyText).then(function() {
+        var btn = document.getElementById('modal-copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+      }).catch(function() {
+        var ta = document.createElement('textarea');
+        ta.value = keyText;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        var btn = document.getElementById('modal-copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+      });
+    }
+
+    // ---- Helpers ----
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('key-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeKeyModal();
+    });
+
+    // Allow Enter key on auth inputs
+    document.getElementById('input-apikey').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') loginWithApiKey();
+    });
+    document.getElementById('input-password').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') loginWithEmail();
+    });
+
+    // Start
+    init();
   </script>
 </body>
 </html>

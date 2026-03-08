@@ -28,338 +28,641 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    pre code { font-size: 0.8125rem; line-height: 1.6; }
-    input, select { background-color: #0f172a; }
-    input:focus, select:focus { outline: none; box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.3); }
-    .spinner { animation: spin 1s linear infinite; }
+    .glow { box-shadow: 0 0 40px rgba(34, 211, 238, 0.15); }
+    /* JSON syntax highlighting */
+    .json-key { color: #7dd3fc; }
+    .json-string { color: #86efac; }
+    .json-number { color: #fbbf24; }
+    .json-bool { color: #c084fc; }
+    .json-null { color: #94a3b8; }
+    .json-bracket { color: #e2e8f0; }
+    /* Spinner */
     @keyframes spin { to { transform: rotate(360deg); } }
-    #response-output { max-height: 600px; overflow-y: auto; }
+    .spinner { animation: spin 0.7s linear infinite; }
+    /* Custom scrollbar */
+    .response-body::-webkit-scrollbar { width: 6px; }
+    .response-body::-webkit-scrollbar-track { background: #0a1021; border-radius: 3px; }
+    .response-body::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    select option { background: #1e293b; color: #e2e8f0; }
+    optgroup { background: #0f172a; color: #94a3b8; font-style: normal; }
   </style>
 </head>
-<body class="bg-dark text-gray-200 antialiased">
+<body class="bg-dark text-gray-200 antialiased min-h-screen">
 
   <!-- Nav -->
   <nav class="fixed top-0 w-full bg-dark/80 backdrop-blur-md border-b border-white/5 z-50">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      <a href="index.html" class="text-xl font-bold text-white flex items-center gap-2">
+      <a href="/" class="text-xl font-bold text-white flex items-center gap-2">
         <svg class="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
         SearchClaw
       </a>
       <div class="hidden md:flex items-center gap-8 text-sm">
         <a href="index.html" class="text-gray-400 hover:text-white transition">Home</a>
         <a href="docs.html" class="text-gray-400 hover:text-white transition">Docs</a>
-        <a href="playground.html" class="text-white font-medium">Playground</a>
+        <a href="playground.html" class="text-white font-medium transition">Playground</a>
+        <a href="dashboard.html" class="text-gray-400 hover:text-white transition">Dashboard</a>
       </div>
-      <a href="index.html#pricing" class="bg-accent hover:bg-accentHover text-dark font-semibold px-4 py-2 rounded-lg text-sm transition">Get API Key</a>
+      <a href="index.html#signup" class="bg-accent hover:bg-accentHover text-dark font-semibold px-4 py-2 rounded-lg text-sm transition">Get API Key</a>
     </div>
   </nav>
 
-  <main class="pt-24 pb-16 px-6">
-    <div class="max-w-6xl mx-auto">
-      <div class="text-center mb-10">
-        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">API Playground</h1>
-        <p class="text-gray-400">Test SearchClaw endpoints live. Enter your API key and fire a request.</p>
-      </div>
+  <!-- Main Content -->
+  <main class="pt-24 pb-12 px-4 sm:px-6 max-w-7xl mx-auto">
 
-      <div class="grid lg:grid-cols-2 gap-6">
+    <h1 class="text-2xl font-bold text-white mb-6">API Playground</h1>
 
-        <!-- Request Panel -->
-        <div class="bg-card rounded-xl border border-white/5 p-6">
-          <h2 class="text-white font-semibold text-lg mb-5">Request</h2>
+    <!-- Two-column layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          <!-- API Key -->
-          <div class="mb-4">
-            <label class="block text-sm text-gray-400 mb-1.5">API Key</label>
-            <input type="password" id="api-key" placeholder="sc_live_xxxxxxxxxx"
-              class="w-full border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-accent">
-          </div>
+      <!-- REQUEST PANEL -->
+      <div class="space-y-5">
 
-          <!-- Endpoint -->
-          <div class="mb-4">
-            <label class="block text-sm text-gray-400 mb-1.5">Endpoint</label>
-            <select id="endpoint"
-              class="w-full border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-accent">
-              <option value="/v1/search">GET /v1/search</option>
-              <option value="/v1/search/ai">GET /v1/search/ai (2 credits)</option>
-              <option value="/v1/news">GET /v1/news</option>
-              <option value="/v1/images">GET /v1/images</option>
-              <option value="/v1/suggest">GET /v1/suggest</option>
-              <option value="/v1/usage">GET /v1/usage</option>
-            </select>
-          </div>
-
-          <!-- Query -->
-          <div class="mb-4" id="query-group">
-            <label class="block text-sm text-gray-400 mb-1.5">Query <span class="text-red-400">*</span></label>
-            <input type="text" id="query" placeholder="kubernetes tutorial" value="kubernetes tutorial"
-              class="w-full border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-accent">
-          </div>
-
-          <!-- Optional Params -->
-          <div id="search-params">
-            <div class="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="block text-sm text-gray-400 mb-1.5">Count</label>
-                <input type="number" id="count" placeholder="10" value="10" min="1" max="50"
-                  class="w-full border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-accent">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-400 mb-1.5">Offset</label>
-                <input type="number" id="offset" placeholder="0" value="0" min="0"
-                  class="w-full border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:border-accent">
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="block text-sm text-gray-400 mb-1.5">Country</label>
-                <select id="country"
-                  class="w-full border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-accent">
-                  <option value="">Any</option>
-                  <option value="US">US</option>
-                  <option value="GB">GB</option>
-                  <option value="DE">DE</option>
-                  <option value="FR">FR</option>
-                  <option value="ZA">ZA</option>
-                  <option value="AU">AU</option>
-                  <option value="CA">CA</option>
-                  <option value="JP">JP</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm text-gray-400 mb-1.5">Language</label>
-                <select id="language"
-                  class="w-full border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-accent">
-                  <option value="en">English</option>
-                  <option value="de">German</option>
-                  <option value="fr">French</option>
-                  <option value="es">Spanish</option>
-                  <option value="ja">Japanese</option>
-                  <option value="zh">Chinese</option>
-                </select>
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="block text-sm text-gray-400 mb-1.5">Freshness</label>
-                <select id="freshness"
-                  class="w-full border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-accent">
-                  <option value="">Any time</option>
-                  <option value="day">Past day</option>
-                  <option value="week">Past week</option>
-                  <option value="month">Past month</option>
-                  <option value="year">Past year</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm text-gray-400 mb-1.5">Safe Search</label>
-                <select id="safesearch"
-                  class="w-full border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-accent">
-                  <option value="1">Moderate</option>
-                  <option value="0">Off</option>
-                  <option value="2">Strict</option>
-                </select>
-              </div>
-            </div>
-            <div class="mb-4">
-              <label class="block text-sm text-gray-400 mb-1.5">Format</label>
-              <select id="format"
-                class="w-full border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-accent">
-                <option value="json">JSON</option>
-                <option value="markdown">Markdown</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Send Button -->
-          <button onclick="sendRequest()" id="send-btn"
-            class="w-full bg-accent hover:bg-accentHover text-dark font-bold py-3 rounded-lg text-sm transition mt-2 flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z"/></svg>
-            Send Request
-          </button>
-
-          <!-- Generated cURL -->
-          <div class="mt-5">
-            <label class="block text-sm text-gray-400 mb-1.5">Generated cURL</label>
-            <pre id="curl-preview" class="bg-darker rounded-lg p-4 border border-white/5 text-xs text-gray-400 overflow-x-auto whitespace-pre-wrap">Click "Send Request" to see the cURL command</pre>
+        <!-- API Key -->
+        <div class="bg-card rounded-xl border border-white/5 p-5">
+          <label class="block text-sm font-medium text-gray-300 mb-2">API Key</label>
+          <div class="flex items-center gap-3">
+            <input id="apiKey" type="password" placeholder="sc_live_..." class="flex-1 bg-darker border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-accent/50 transition">
+            <label class="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer select-none whitespace-nowrap">
+              <input id="saveKey" type="checkbox" class="accent-accent w-3.5 h-3.5"> Save
+            </label>
           </div>
         </div>
 
-        <!-- Response Panel -->
-        <div class="bg-card rounded-xl border border-white/5 p-6">
-          <div class="flex items-center justify-between mb-5">
-            <h2 class="text-white font-semibold text-lg">Response</h2>
-            <div id="response-meta" class="flex items-center gap-3 text-sm text-gray-500"></div>
-          </div>
-          <div id="response-output" class="bg-[#0d1117] rounded-xl p-5 border border-white/5 min-h-[400px]">
-            <pre><code id="response-body" class="text-gray-500 text-sm">// Response will appear here after you send a request.
-//
-// Try it:
-// 1. Enter your API key (or use without one for a demo error)
-// 2. Type a search query
-// 3. Click "Send Request"</code></pre>
-          </div>
+        <!-- Endpoint Selector -->
+        <div class="bg-card rounded-xl border border-white/5 p-5">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Endpoint</label>
+          <select id="endpoint" class="w-full bg-darker border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent/50 transition cursor-pointer">
+            <optgroup label="Search">
+              <option value="POST /v1/search">POST /v1/search</option>
+              <option value="GET /v1/search/news">GET /v1/search/news</option>
+              <option value="GET /v1/search/images">GET /v1/search/images</option>
+              <option value="GET /v1/suggest">GET /v1/suggest</option>
+            </optgroup>
+            <optgroup label="Extraction">
+              <option value="POST /v1/extract">POST /v1/extract</option>
+              <option value="POST /v1/markdown">POST /v1/markdown</option>
+              <option value="POST /v1/screenshot">POST /v1/screenshot</option>
+            </optgroup>
+            <optgroup label="Crawling">
+              <option value="POST /v1/crawl">POST /v1/crawl</option>
+              <option value="GET /v1/jobs/{id}">GET /v1/jobs/{id}</option>
+            </optgroup>
+            <optgroup label="Advanced">
+              <option value="POST /v1/pipeline">POST /v1/pipeline</option>
+              <option value="POST /v1/map">POST /v1/map</option>
+              <option value="POST /v1/browse">POST /v1/browse</option>
+              <option value="POST /v1/agent">POST /v1/agent</option>
+            </optgroup>
+            <optgroup label="Account">
+              <option value="GET /v1/usage">GET /v1/usage</option>
+            </optgroup>
+          </select>
+          <div id="creditCost" class="mt-2 text-xs text-gray-500"></div>
+        </div>
 
-          <!-- Response Headers -->
-          <div class="mt-5">
-            <label class="block text-sm text-gray-400 mb-1.5">Response Headers</label>
-            <pre id="response-headers" class="bg-darker rounded-lg p-4 border border-white/5 text-xs text-gray-500 overflow-x-auto whitespace-pre-wrap">—</pre>
+        <!-- Dynamic Fields -->
+        <div id="fieldsPanel" class="bg-card rounded-xl border border-white/5 p-5">
+          <div class="text-sm font-medium text-gray-300 mb-3">Parameters</div>
+          <div id="fieldsContainer" class="space-y-3"></div>
+        </div>
+
+        <!-- Run Button -->
+        <button id="runBtn" onclick="runRequest()" class="w-full bg-accent hover:bg-accentHover text-dark font-semibold py-3 rounded-xl text-sm transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg id="runIcon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z"/></svg>
+          <span id="runLabel">Run</span>
+          <svg id="runSpinner" class="w-4 h-4 spinner hidden" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4" stroke-linecap="round"/></svg>
+        </button>
+
+        <!-- cURL Preview -->
+        <div class="bg-card rounded-xl border border-white/5 p-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-300">cURL</span>
+            <button onclick="copyCurl()" class="text-xs text-gray-500 hover:text-accent transition">Copy</button>
           </div>
+          <pre id="curlPreview" class="bg-darker rounded-lg p-3 text-xs text-gray-400 overflow-x-auto whitespace-pre-wrap break-all font-mono leading-relaxed"></pre>
+        </div>
+
+      </div>
+
+      <!-- RESPONSE PANEL -->
+      <div class="space-y-5">
+
+        <!-- Status Line -->
+        <div id="statusLine" class="bg-card rounded-xl border border-white/5 p-5 hidden">
+          <div class="flex items-center gap-4">
+            <span id="statusCode" class="text-lg font-bold"></span>
+            <span id="statusText" class="text-sm text-gray-400"></span>
+            <span class="flex-1"></span>
+            <span id="responseTime" class="text-sm text-gray-500"></span>
+          </div>
+        </div>
+
+        <!-- Response Body -->
+        <div class="bg-card rounded-xl border border-white/5 p-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-300">Response</span>
+            <button onclick="copyResponse()" class="text-xs text-gray-500 hover:text-accent transition">Copy</button>
+          </div>
+          <pre id="responseBody" class="response-body bg-darker rounded-lg p-4 text-sm font-mono overflow-auto max-h-[500px] min-h-[120px] text-gray-500 leading-relaxed">No response yet. Hit Run to send a request.</pre>
+        </div>
+
+        <!-- Response Headers -->
+        <div id="headersPanel" class="bg-card rounded-xl border border-white/5 p-5 hidden">
+          <div class="text-sm font-medium text-gray-300 mb-2">Response Headers</div>
+          <div id="responseHeaders" class="text-xs font-mono text-gray-400 space-y-1"></div>
         </div>
 
       </div>
     </div>
+
+    <!-- HISTORY PANEL -->
+    <div class="mt-8 bg-card rounded-xl border border-white/5 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-sm font-medium text-gray-300">History</span>
+        <button onclick="clearHistory()" class="text-xs text-gray-500 hover:text-red-400 transition">Clear History</button>
+      </div>
+      <div id="historyList" class="space-y-1 text-sm">
+        <div class="text-gray-600 text-xs">No history yet.</div>
+      </div>
+    </div>
+
   </main>
 
-  <!-- Footer -->
-  <footer class="border-t border-white/5 py-10 px-6">
-    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-      <div class="text-gray-500 text-sm">&copy; 2026 SearchClaw. All rights reserved.</div>
-      <div class="flex gap-6 text-sm text-gray-500">
-        <a href="docs.html" class="hover:text-white transition">Docs</a>
-        <a href="index.html" class="hover:text-white transition">Home</a>
-        <a href="mailto:hello@searchclaw.dev" class="hover:text-white transition">Contact</a>
-      </div>
-    </div>
-  </footer>
-
   <script>
+    // ─── Endpoint Definitions ───────────────────────────────────────────
     const BASE_URL = 'https://api.searchclaw.dev';
 
-    // Toggle param visibility based on endpoint
-    const endpointSelect = document.getElementById('endpoint');
-    const searchParams = document.getElementById('search-params');
-    const queryGroup = document.getElementById('query-group');
+    const ENDPOINTS = {
+      'POST /v1/search': {
+        method: 'POST', path: '/v1/search', credits: 1,
+        fields: [
+          { name: 'q', type: 'text', required: true, label: 'Query' },
+          { name: 'count', type: 'number', label: 'Count', default: 10 },
+          { name: 'mode', type: 'select', label: 'Mode', options: ['fast', 'basic', 'deep'], default: 'basic' },
+          { name: 'country', type: 'text', label: 'Country' },
+          { name: 'freshness', type: 'select', label: 'Freshness', options: ['any', 'day', 'week', 'month', 'year'], default: 'any' },
+        ]
+      },
+      'GET /v1/search/news': {
+        method: 'GET', path: '/v1/search/news', credits: 1,
+        fields: [
+          { name: 'q', type: 'text', required: true, label: 'Query' },
+          { name: 'count', type: 'number', label: 'Count', default: 10 },
+          { name: 'freshness', type: 'select', label: 'Freshness', options: ['any', 'day', 'week', 'month', 'year'], default: 'any' },
+        ]
+      },
+      'GET /v1/search/images': {
+        method: 'GET', path: '/v1/search/images', credits: 1,
+        fields: [
+          { name: 'q', type: 'text', required: true, label: 'Query' },
+          { name: 'count', type: 'number', label: 'Count', default: 10 },
+        ]
+      },
+      'GET /v1/suggest': {
+        method: 'GET', path: '/v1/suggest', credits: 0.1,
+        fields: [
+          { name: 'q', type: 'text', required: true, label: 'Query' },
+        ]
+      },
+      'POST /v1/extract': {
+        method: 'POST', path: '/v1/extract', credits: 5,
+        fields: [
+          { name: 'url', type: 'text', required: true, label: 'URL' },
+          { name: 'schema', type: 'textarea', label: 'Schema (JSON)', placeholder: '{\n  "title": "string",\n  "price": "number",\n  "description": "string"\n}' },
+          { name: 'prompt', type: 'text', label: 'Prompt' },
+        ]
+      },
+      'POST /v1/markdown': {
+        method: 'POST', path: '/v1/markdown', credits: 2,
+        fields: [
+          { name: 'url', type: 'text', required: true, label: 'URL' },
+          { name: 'include_links', type: 'checkbox', label: 'Include Links', default: true },
+          { name: 'include_images', type: 'checkbox', label: 'Include Images', default: true },
+        ]
+      },
+      'POST /v1/screenshot': {
+        method: 'POST', path: '/v1/screenshot', credits: 3,
+        fields: [
+          { name: 'url', type: 'text', required: true, label: 'URL' },
+          { name: 'width', type: 'number', label: 'Width', default: 1280 },
+          { name: 'height', type: 'number', label: 'Height', default: 720 },
+          { name: 'full_page', type: 'checkbox', label: 'Full Page' },
+          { name: 'format', type: 'select', label: 'Format', options: ['png', 'jpeg'], default: 'png' },
+        ]
+      },
+      'POST /v1/crawl': {
+        method: 'POST', path: '/v1/crawl', credits: 10,
+        fields: [
+          { name: 'urls', type: 'textarea', required: true, label: 'URLs (one per line)', placeholder: 'https://example.com\nhttps://example.com/about' },
+          { name: 'max_pages', type: 'number', label: 'Max Pages', default: 10 },
+          { name: 'webhook_url', type: 'text', label: 'Webhook URL' },
+          { name: 'output_format', type: 'select', label: 'Output Format', options: ['markdown', 'html', 'text'], default: 'markdown' },
+        ]
+      },
+      'GET /v1/jobs/{id}': {
+        method: 'GET', path: '/v1/jobs/{id}', credits: 0,
+        fields: [
+          { name: 'id', type: 'text', required: true, label: 'Job ID' },
+        ]
+      },
+      'POST /v1/pipeline': {
+        method: 'POST', path: '/v1/pipeline', credits: 8,
+        fields: [
+          { name: 'query', type: 'text', required: true, label: 'Query' },
+          { name: 'extract_schema', type: 'textarea', label: 'Extract Schema (JSON)', placeholder: '{\n  "title": "string",\n  "summary": "string"\n}' },
+          { name: 'count', type: 'number', label: 'Count', default: 5 },
+        ]
+      },
+      'POST /v1/map': {
+        method: 'POST', path: '/v1/map', credits: 5,
+        fields: [
+          { name: 'url', type: 'text', required: true, label: 'URL' },
+          { name: 'max_depth', type: 'number', label: 'Max Depth', default: 2 },
+          { name: 'limit', type: 'number', label: 'Limit', default: 100 },
+        ]
+      },
+      'POST /v1/browse': {
+        method: 'POST', path: '/v1/browse', credits: 5,
+        fields: [
+          { name: 'url', type: 'text', required: true, label: 'URL' },
+          { name: 'actions', type: 'textarea', label: 'Actions (JSON array)', placeholder: '[\n  { "type": "click", "selector": "#btn" },\n  { "type": "wait", "ms": 1000 },\n  { "type": "screenshot" }\n]' },
+        ]
+      },
+      'POST /v1/agent': {
+        method: 'POST', path: '/v1/agent', credits: 25,
+        fields: [
+          { name: 'task', type: 'textarea', required: true, label: 'Task', placeholder: 'Find the pricing for Acme Corp SaaS product' },
+          { name: 'max_steps', type: 'number', label: 'Max Steps', default: 10 },
+          { name: 'output_schema', type: 'textarea', label: 'Output Schema (JSON)', placeholder: '{\n  "answer": "string",\n  "sources": ["string"]\n}' },
+        ]
+      },
+      'GET /v1/usage': {
+        method: 'GET', path: '/v1/usage', credits: 0,
+        fields: []
+      },
+    };
 
-    endpointSelect.addEventListener('change', () => {
-      const ep = endpointSelect.value;
-      const isUsage = ep === '/v1/usage';
-      const isSuggest = ep === '/v1/suggest';
+    // ─── State ──────────────────────────────────────────────────────────
+    let rawResponseText = '';
 
-      queryGroup.style.display = isUsage ? 'none' : 'block';
-      searchParams.style.display = (isUsage || isSuggest) ? 'none' : 'block';
-    });
-
-    function buildUrl() {
-      const endpoint = document.getElementById('endpoint').value;
-      const params = new URLSearchParams();
-
-      if (endpoint !== '/v1/usage') {
-        const q = document.getElementById('query').value.trim();
-        if (q) params.set('q', q);
+    // ─── Init ───────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      // Load saved API key
+      const saved = localStorage.getItem('sc_api_key');
+      if (saved) {
+        document.getElementById('apiKey').value = saved;
+        document.getElementById('saveKey').checked = true;
       }
 
-      if (endpoint !== '/v1/usage' && endpoint !== '/v1/suggest') {
-        const count = document.getElementById('count').value;
-        if (count && count !== '10') params.set('count', count);
+      // API key save/unsave
+      document.getElementById('saveKey').addEventListener('change', (e) => {
+        if (e.target.checked) {
+          localStorage.setItem('sc_api_key', document.getElementById('apiKey').value);
+        } else {
+          localStorage.removeItem('sc_api_key');
+        }
+      });
+      document.getElementById('apiKey').addEventListener('input', () => {
+        if (document.getElementById('saveKey').checked) {
+          localStorage.setItem('sc_api_key', document.getElementById('apiKey').value);
+        }
+        updateCurl();
+      });
 
-        const offset = document.getElementById('offset').value;
-        if (offset && offset !== '0') params.set('offset', offset);
+      // Endpoint change
+      document.getElementById('endpoint').addEventListener('change', () => {
+        renderFields();
+        updateCurl();
+      });
 
-        const country = document.getElementById('country').value;
-        if (country) params.set('country', country);
-
-        const language = document.getElementById('language').value;
-        if (language && language !== 'en') params.set('language', language);
-
-        const freshness = document.getElementById('freshness').value;
-        if (freshness) params.set('freshness', freshness);
-
-        const safesearch = document.getElementById('safesearch').value;
-        if (safesearch && safesearch !== '1') params.set('safesearch', safesearch);
-
-        const format = document.getElementById('format').value;
-        if (format && format !== 'json') params.set('format', format);
-      }
-
-      const qs = params.toString();
-      return BASE_URL + endpoint + (qs ? '?' + qs : '');
-    }
-
-    function updateCurl() {
-      const url = buildUrl();
-      const apiKey = document.getElementById('api-key').value.trim() || 'YOUR_API_KEY';
-      const curl = `curl "${url}" \\\n  -H "X-API-Key: ${apiKey}"`;
-      document.getElementById('curl-preview').textContent = curl;
-    }
-
-    // Update cURL preview on any input change
-    document.querySelectorAll('input, select').forEach(el => {
-      el.addEventListener('input', updateCurl);
-      el.addEventListener('change', updateCurl);
-    });
-
-    async function sendRequest() {
-      const btn = document.getElementById('send-btn');
-      const responseBody = document.getElementById('response-body');
-      const responseMeta = document.getElementById('response-meta');
-      const responseHeaders = document.getElementById('response-headers');
-      const apiKey = document.getElementById('api-key').value.trim();
-
-      // Update cURL
+      renderFields();
       updateCurl();
+      renderHistory();
+    });
 
-      // Loading state
+    // ─── Render Dynamic Fields ──────────────────────────────────────────
+    function renderFields() {
+      const key = document.getElementById('endpoint').value;
+      const ep = ENDPOINTS[key];
+      const container = document.getElementById('fieldsContainer');
+      const costEl = document.getElementById('creditCost');
+
+      // Credit cost
+      if (ep.credits > 0) {
+        costEl.textContent = `Cost: ${ep.credits} credit${ep.credits !== 1 ? 's' : ''} per request`;
+      } else {
+        costEl.textContent = 'Cost: Free';
+      }
+
+      if (ep.fields.length === 0) {
+        container.innerHTML = '<div class="text-xs text-gray-600">No parameters required.</div>';
+        return;
+      }
+
+      container.innerHTML = ep.fields.map(f => {
+        const req = f.required ? '<span class="text-red-400 ml-0.5">*</span>' : '';
+        const id = `field_${f.name}`;
+
+        if (f.type === 'text') {
+          return `<div>
+            <label for="${id}" class="block text-xs text-gray-400 mb-1">${f.label}${req}</label>
+            <input id="${id}" type="text" ${f.required ? 'required' : ''} value="${f.default || ''}" placeholder="${f.placeholder || ''}" oninput="updateCurl()"
+              class="w-full bg-darker border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent/50 transition">
+          </div>`;
+        }
+        if (f.type === 'number') {
+          return `<div>
+            <label for="${id}" class="block text-xs text-gray-400 mb-1">${f.label}${req}</label>
+            <input id="${id}" type="number" ${f.required ? 'required' : ''} value="${f.default || ''}" oninput="updateCurl()"
+              class="w-full bg-darker border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent/50 transition">
+          </div>`;
+        }
+        if (f.type === 'select') {
+          const opts = f.options.map(o => `<option value="${o}" ${o === f.default ? 'selected' : ''}>${o}</option>`).join('');
+          return `<div>
+            <label for="${id}" class="block text-xs text-gray-400 mb-1">${f.label}${req}</label>
+            <select id="${id}" onchange="updateCurl()"
+              class="w-full bg-darker border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent/50 transition cursor-pointer">
+              ${opts}
+            </select>
+          </div>`;
+        }
+        if (f.type === 'checkbox') {
+          return `<div class="flex items-center gap-2">
+            <input id="${id}" type="checkbox" ${f.default ? 'checked' : ''} onchange="updateCurl()" class="accent-accent w-4 h-4">
+            <label for="${id}" class="text-xs text-gray-400">${f.label}</label>
+          </div>`;
+        }
+        if (f.type === 'textarea') {
+          return `<div>
+            <label for="${id}" class="block text-xs text-gray-400 mb-1">${f.label}${req}</label>
+            <textarea id="${id}" rows="3" ${f.required ? 'required' : ''} placeholder="${(f.placeholder || '').replace(/"/g, '&quot;')}" oninput="updateCurl()"
+              class="w-full bg-darker border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent/50 transition font-mono"></textarea>
+          </div>`;
+        }
+        return '';
+      }).join('');
+    }
+
+    // ─── Gather Field Values ────────────────────────────────────────────
+    function gatherValues() {
+      const key = document.getElementById('endpoint').value;
+      const ep = ENDPOINTS[key];
+      const values = {};
+      for (const f of ep.fields) {
+        const el = document.getElementById(`field_${f.name}`);
+        if (!el) continue;
+        if (f.type === 'checkbox') {
+          values[f.name] = el.checked;
+        } else if (f.type === 'number') {
+          const v = el.value.trim();
+          if (v !== '') values[f.name] = Number(v);
+        } else {
+          const v = el.value.trim();
+          if (v !== '') values[f.name] = v;
+        }
+      }
+      return values;
+    }
+
+    // ─── Build Request Details ──────────────────────────────────────────
+    function buildRequest() {
+      const key = document.getElementById('endpoint').value;
+      const ep = ENDPOINTS[key];
+      const values = gatherValues();
+      const apiKey = document.getElementById('apiKey').value.trim();
+
+      let url = BASE_URL + ep.path;
+      let body = null;
+      const headers = {};
+
+      if (apiKey) headers['X-API-Key'] = apiKey;
+
+      // Handle path params
+      if (ep.path.includes('{id}') && values.id) {
+        url = url.replace('{id}', encodeURIComponent(values.id));
+        delete values.id;
+      }
+
+      if (ep.method === 'GET') {
+        const params = new URLSearchParams();
+        for (const [k, v] of Object.entries(values)) {
+          if (v !== undefined && v !== '') params.set(k, v);
+        }
+        const qs = params.toString();
+        if (qs) url += '?' + qs;
+      } else {
+        headers['Content-Type'] = 'application/json';
+        // Process special fields
+        const bodyObj = {};
+        for (const [k, v] of Object.entries(values)) {
+          if (k === 'urls' && typeof v === 'string') {
+            bodyObj[k] = v.split('\n').map(s => s.trim()).filter(Boolean);
+          } else if (['schema', 'extract_schema', 'output_schema', 'actions'].includes(k) && typeof v === 'string') {
+            try { bodyObj[k] = JSON.parse(v); } catch { bodyObj[k] = v; }
+          } else {
+            bodyObj[k] = v;
+          }
+        }
+        body = JSON.stringify(bodyObj, null, 2);
+      }
+
+      return { method: ep.method, url, headers, body };
+    }
+
+    // ─── Update cURL Preview ────────────────────────────────────────────
+    function updateCurl() {
+      const r = buildRequest();
+      let cmd = `curl -X ${r.method}`;
+      for (const [k, v] of Object.entries(r.headers)) {
+        cmd += ` \\\n  -H '${k}: ${v}'`;
+      }
+      if (r.body) {
+        cmd += ` \\\n  -d '${r.body}'`;
+      }
+      cmd += ` \\\n  '${r.url}'`;
+      document.getElementById('curlPreview').textContent = cmd;
+    }
+
+    function copyCurl() {
+      navigator.clipboard.writeText(document.getElementById('curlPreview').textContent);
+    }
+
+    function copyResponse() {
+      navigator.clipboard.writeText(rawResponseText);
+    }
+
+    // ─── Syntax Highlight JSON ──────────────────────────────────────────
+    function highlightJSON(str) {
+      return str.replace(/("(?:\\.|[^"\\])*")\s*:/g, '<span class="json-key">$1</span>:')
+        .replace(/:\s*("(?:\\.|[^"\\])*")/g, ': <span class="json-string">$1</span>')
+        .replace(/:\s*(\d+\.?\d*)/g, ': <span class="json-number">$1</span>')
+        .replace(/:\s*(true|false)/g, ': <span class="json-bool">$1</span>')
+        .replace(/:\s*(null)/g, ': <span class="json-null">$1</span>')
+        .replace(/([[\]{}])/g, '<span class="json-bracket">$1</span>');
+    }
+
+    // ─── Run Request ────────────────────────────────────────────────────
+    async function runRequest() {
+      const btn = document.getElementById('runBtn');
+      const label = document.getElementById('runLabel');
+      const icon = document.getElementById('runIcon');
+      const spinner = document.getElementById('runSpinner');
+
       btn.disabled = true;
-      btn.innerHTML = '<svg class="w-4 h-4 spinner" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"/></svg> Sending...';
-      responseBody.textContent = 'Loading...';
-      responseBody.className = 'text-gray-500 text-sm';
+      label.textContent = 'Running...';
+      icon.classList.add('hidden');
+      spinner.classList.remove('hidden');
 
-      const url = buildUrl();
+      const r = buildRequest();
+      const endpointKey = document.getElementById('endpoint').value;
       const startTime = performance.now();
 
       try {
-        const headers = {};
-        if (apiKey) headers['X-API-Key'] = apiKey;
+        const fetchOpts = { method: r.method, headers: r.headers };
+        if (r.body) fetchOpts.body = r.body;
 
-        const response = await fetch(url, { headers });
+        const res = await fetch(r.url, fetchOpts);
         const elapsed = Math.round(performance.now() - startTime);
 
         // Status
-        const statusColor = response.ok ? 'text-green-400' : 'text-red-400';
-        responseMeta.innerHTML = `
-          <span class="${statusColor} font-mono font-semibold">${response.status} ${response.statusText}</span>
-          <span class="text-gray-600">|</span>
-          <span>${elapsed}ms</span>
-        `;
+        const statusLine = document.getElementById('statusLine');
+        const statusCode = document.getElementById('statusCode');
+        const statusText = document.getElementById('statusText');
+        const responseTime = document.getElementById('responseTime');
 
-        // Headers
-        const headerLines = [];
-        response.headers.forEach((value, key) => {
-          if (key.toLowerCase().startsWith('x-ratelimit') ||
-              key.toLowerCase().startsWith('x-credits') ||
-              key.toLowerCase() === 'content-type' ||
-              key.toLowerCase() === 'retry-after') {
-            headerLines.push(`${key}: ${value}`);
-          }
-        });
-        responseHeaders.textContent = headerLines.length > 0 ? headerLines.join('\n') : 'No rate-limit headers returned';
+        statusLine.classList.remove('hidden');
+        statusCode.textContent = res.status;
+        statusCode.className = `text-lg font-bold ${res.status < 400 ? 'text-green-400' : 'text-red-400'}`;
+        statusText.textContent = res.statusText;
+        responseTime.textContent = `${elapsed}ms`;
 
         // Body
-        const text = await response.text();
+        let bodyText;
         try {
-          const json = JSON.parse(text);
-          responseBody.textContent = JSON.stringify(json, null, 2);
-          responseBody.className = response.ok ? 'text-gray-300 text-sm' : 'text-red-300 text-sm';
+          const json = await res.json();
+          bodyText = JSON.stringify(json, null, 2);
         } catch {
-          responseBody.textContent = text;
-          responseBody.className = 'text-gray-300 text-sm';
+          bodyText = await res.text();
         }
-      } catch (err) {
-        responseMeta.innerHTML = '<span class="text-red-400 font-semibold">Network Error</span>';
-        responseBody.textContent = `Failed to connect to ${BASE_URL}\n\nError: ${err.message}\n\nThis is expected if the API server is not running.\nThe playground will work once the API is deployed.`;
-        responseBody.className = 'text-red-300 text-sm';
-        responseHeaders.textContent = '—';
-      }
+        rawResponseText = bodyText;
+        document.getElementById('responseBody').innerHTML = highlightJSON(escapeHtml(bodyText));
 
-      // Reset button
-      btn.disabled = false;
-      btn.innerHTML = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z"/></svg> Send Request';
+        // Headers
+        const headersPanel = document.getElementById('headersPanel');
+        const headersEl = document.getElementById('responseHeaders');
+        const interestingHeaders = ['x-ratelimit-limit', 'x-ratelimit-remaining', 'x-credits-used', 'x-credits-remaining', 'content-type', 'x-request-id'];
+        const headerLines = [];
+        res.headers.forEach((v, k) => {
+          if (interestingHeaders.includes(k.toLowerCase()) || k.toLowerCase().startsWith('x-')) {
+            headerLines.push(`<div><span class="text-gray-500">${escapeHtml(k)}:</span> ${escapeHtml(v)}</div>`);
+          }
+        });
+        if (headerLines.length > 0) {
+          headersPanel.classList.remove('hidden');
+          headersEl.innerHTML = headerLines.join('');
+        }
+
+        // History
+        addHistory(endpointKey, res.status, elapsed);
+
+      } catch (err) {
+        const elapsed = Math.round(performance.now() - startTime);
+        document.getElementById('statusLine').classList.remove('hidden');
+        document.getElementById('statusCode').textContent = 'ERR';
+        document.getElementById('statusCode').className = 'text-lg font-bold text-red-400';
+        document.getElementById('statusText').textContent = 'Network Error';
+        document.getElementById('responseTime').textContent = `${elapsed}ms`;
+
+        const errObj = { error: 'network_error', message: err.message };
+        rawResponseText = JSON.stringify(errObj, null, 2);
+        document.getElementById('responseBody').innerHTML = highlightJSON(escapeHtml(rawResponseText));
+
+        addHistory(endpointKey, 0, elapsed);
+      } finally {
+        btn.disabled = false;
+        label.textContent = 'Run';
+        icon.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
     }
 
-    // Allow Enter to submit
-    document.getElementById('query').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') sendRequest();
-    });
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ─── History ────────────────────────────────────────────────────────
+    function getHistory() {
+      try { return JSON.parse(localStorage.getItem('sc_history') || '[]'); } catch { return []; }
+    }
+
+    function addHistory(endpoint, status, time) {
+      const hist = getHistory();
+      const values = gatherValues();
+      hist.unshift({
+        ts: Date.now(),
+        endpoint,
+        status,
+        time,
+        values,
+      });
+      if (hist.length > 20) hist.length = 20;
+      localStorage.setItem('sc_history', JSON.stringify(hist));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const hist = getHistory();
+      const el = document.getElementById('historyList');
+      if (hist.length === 0) {
+        el.innerHTML = '<div class="text-gray-600 text-xs">No history yet.</div>';
+        return;
+      }
+      el.innerHTML = hist.map((h, i) => {
+        const d = new Date(h.ts);
+        const ts = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const date = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        const color = h.status >= 200 && h.status < 400 ? 'text-green-400' : h.status === 0 ? 'text-gray-500' : 'text-red-400';
+        return `<button onclick="loadHistory(${i})" class="w-full flex items-center gap-4 px-3 py-2 rounded-lg hover:bg-white/5 transition text-left">
+          <span class="text-xs text-gray-600 w-28 shrink-0">${date} ${ts}</span>
+          <span class="text-xs text-gray-300 flex-1 truncate font-mono">${escapeHtml(h.endpoint)}</span>
+          <span class="text-xs font-bold ${color}">${h.status || 'ERR'}</span>
+          <span class="text-xs text-gray-600 w-16 text-right">${h.time}ms</span>
+        </button>`;
+      }).join('');
+    }
+
+    function loadHistory(index) {
+      const hist = getHistory();
+      const h = hist[index];
+      if (!h) return;
+
+      // Set endpoint
+      document.getElementById('endpoint').value = h.endpoint;
+      renderFields();
+
+      // Fill values
+      if (h.values) {
+        const ep = ENDPOINTS[h.endpoint];
+        if (ep) {
+          for (const f of ep.fields) {
+            const el = document.getElementById(`field_${f.name}`);
+            if (!el || h.values[f.name] === undefined) continue;
+            if (f.type === 'checkbox') {
+              el.checked = h.values[f.name];
+            } else {
+              el.value = h.values[f.name];
+            }
+          }
+        }
+      }
+      updateCurl();
+    }
+
+    function clearHistory() {
+      localStorage.removeItem('sc_history');
+      renderHistory();
+    }
   </script>
 </body>
 </html>
