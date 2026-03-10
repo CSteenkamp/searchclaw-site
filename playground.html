@@ -94,8 +94,8 @@
           <select id="endpoint" class="w-full bg-darker border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent/50 transition cursor-pointer">
             <optgroup label="Search">
               <option value="POST /v1/search">POST /v1/search</option>
-              <option value="GET /v1/search/news">GET /v1/search/news</option>
-              <option value="GET /v1/search/images">GET /v1/search/images</option>
+              <option value="GET /v1/news">GET /v1/news</option>
+              <option value="GET /v1/images">GET /v1/images</option>
               <option value="GET /v1/suggest">GET /v1/suggest</option>
             </optgroup>
             <optgroup label="Extraction">
@@ -203,16 +203,16 @@
           { name: 'freshness', type: 'select', label: 'Freshness', options: ['any', 'day', 'week', 'month', 'year'], default: 'any' },
         ]
       },
-      'GET /v1/search/news': {
-        method: 'GET', path: '/v1/search/news', credits: 1,
+      'GET /v1/news': {
+        method: 'GET', path: '/v1/news', credits: 1,
         fields: [
           { name: 'q', type: 'text', required: true, label: 'Query' },
           { name: 'count', type: 'number', label: 'Count', default: 10 },
           { name: 'freshness', type: 'select', label: 'Freshness', options: ['any', 'day', 'week', 'month', 'year'], default: 'any' },
         ]
       },
-      'GET /v1/search/images': {
-        method: 'GET', path: '/v1/search/images', credits: 1,
+      'GET /v1/images': {
+        method: 'GET', path: '/v1/images', credits: 1,
         fields: [
           { name: 'q', type: 'text', required: true, label: 'Query' },
           { name: 'count', type: 'number', label: 'Count', default: 10 },

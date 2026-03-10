@@ -7,8 +7,8 @@
 
 ## Endpoints
 - POST /v1/search: Web search via SearXNG (1 credit)
-- POST /v1/search/news: News search (1 credit)
-- POST /v1/search/images: Image search (1 credit)
+- GET /v1/news: News search (1 credit)
+- GET /v1/images: Image search (1 credit)
 - GET /v1/suggest: Autocomplete suggestions (1 credit)
 - POST /v1/extract: Schema-driven structured extraction from URL (1 credit)
 - POST /v1/markdown: Convert URL to clean markdown (1 credit)

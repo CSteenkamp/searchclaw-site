@@ -51,14 +51,14 @@ Web search via SearXNG. Returns ranked results from multiple engines.
 
 ---
 
-## POST /v1/search/news
+## GET /v1/news
 News search. Same request/response format as /v1/search with category fixed to "news".
 
 **Cost:** 1 credit
 
 ---
 
-## POST /v1/search/images
+## GET /v1/images
 Image search. Same request format as /v1/search with category fixed to "images".
 
 **Response results include:** `img_src`, `thumbnail`, `resolution` fields.
