@@ -102,10 +102,8 @@
           <span class="w-3 h-3 rounded-full bg-green-500"></span>
           <span class="ml-2 text-xs text-gray-500">Terminal</span>
         </div>
-        <pre class="overflow-x-auto"><code class="text-sm text-gray-300"><span class="text-gray-500">$</span> curl -X POST https://api.searchclaw.dev/v1/search \
-  -H <span class="text-green-400">"Authorization: Bearer sc_your_key"</span> \
-  -H <span class="text-green-400">"Content-Type: application/json"</span> \
-  -d <span class="text-green-400">'{"query": "best AI frameworks 2026", "mode": "basic"}'</span></code></pre>
+        <pre class="overflow-x-auto"><code class="text-sm text-gray-300"><span class="text-gray-500">$</span> curl <span class="text-green-400">"https://api.searchclaw.dev/v1/search?q=best+AI+frameworks+2026&amp;mode=basic"</span> \
+  -H <span class="text-green-400">"X-API-Key: sc_your_key"</span></code></pre>
       </div>
     </div>
   </section>
@@ -114,20 +112,31 @@
   <section class="py-20 px-4 bg-darker" id="endpoints">
     <div class="max-w-7xl mx-auto">
       <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">
-        <span class="gradient-text">13 Endpoints</span><span class="text-white">, One API Key</span>
+        <span class="gradient-text">14 Endpoints</span><span class="text-white">, One API Key</span>
       </h2>
       <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">Everything you need to search, extract, crawl, browse, and automate the web. Simple credit-based pricing.</p>
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-        <!-- POST /v1/search -->
+        <!-- GET /v1/search -->
         <div class="endpoint-card bg-card rounded-xl p-5 border border-gray-700/50">
           <div class="flex items-center gap-3 mb-3">
             <svg class="w-5 h-5 text-accent flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <span class="bg-blue-500/20 text-blue-400 text-xs font-bold px-2 py-0.5 rounded">POST</span>
+            <span class="bg-green-500/20 text-green-400 text-xs font-bold px-2 py-0.5 rounded">GET</span>
             <code class="text-sm text-white font-mono">/v1/search</code>
           </div>
           <p class="text-gray-400 text-sm mb-2">Web search with fast, basic, and deep modes. Returns ranked results with snippets.</p>
           <span class="text-accent text-xs font-semibold">1-3 credits</span>
+        </div>
+
+        <!-- GET /v1/search/ai -->
+        <div class="endpoint-card bg-card rounded-xl p-5 border border-gray-700/50">
+          <div class="flex items-center gap-3 mb-3">
+            <svg class="w-5 h-5 text-accent flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <span class="bg-green-500/20 text-green-400 text-xs font-bold px-2 py-0.5 rounded">GET</span>
+            <code class="text-sm text-white font-mono">/v1/search/ai</code>
+          </div>
+          <p class="text-gray-400 text-sm mb-2">AI-powered search with context synthesis and sources. Returns RAG-ready context.</p>
+          <span class="text-accent text-xs font-semibold">2 credits</span>
         </div>
 
         <!-- GET /v1/news -->
@@ -287,7 +296,7 @@
           <pre class="overflow-x-auto text-sm"><code class="text-gray-300">{
   <span class="text-accent">"query"</span>: <span class="text-green-400">"best restaurants in SF"</span>,
   <span class="text-accent">"num_results"</span>: <span class="text-yellow-400">5</span>,
-  <span class="text-accent">"extract_schema"</span>: {
+  <span class="text-accent">"schema"</span>: {
     <span class="text-accent">"name"</span>: <span class="text-green-400">"string"</span>,
     <span class="text-accent">"rating"</span>: <span class="text-green-400">"number"</span>,
     <span class="text-accent">"price_range"</span>: <span class="text-green-400">"string"</span>,
@@ -367,10 +376,10 @@
           <p class="text-xs text-gray-500 mb-3 font-mono">Search Example</p>
           <pre class="overflow-x-auto"><code class="text-sm text-gray-300"><span class="text-blue-400">import</span> requests
 
-resp = requests.post(
+resp = requests.get(
     <span class="text-green-400">"https://api.searchclaw.dev/v1/search"</span>,
-    headers={<span class="text-green-400">"Authorization"</span>: <span class="text-green-400">"Bearer sc_your_key"</span>},
-    json={<span class="text-green-400">"query"</span>: <span class="text-green-400">"latest AI news"</span>, <span class="text-green-400">"mode"</span>: <span class="text-green-400">"basic"</span>}
+    headers={<span class="text-green-400">"X-API-Key"</span>: <span class="text-green-400">"sc_your_key"</span>},
+    params={<span class="text-green-400">"q"</span>: <span class="text-green-400">"latest AI news"</span>, <span class="text-green-400">"mode"</span>: <span class="text-green-400">"basic"</span>}
 )
 results = resp.json()[<span class="text-green-400">"results"</span>]
 <span class="text-blue-400">for</span> r <span class="text-blue-400">in</span> results:
@@ -382,10 +391,10 @@ results = resp.json()[<span class="text-green-400">"results"</span>]
 
 resp = requests.post(
     <span class="text-green-400">"https://api.searchclaw.dev/v1/pipeline"</span>,
-    headers={<span class="text-green-400">"Authorization"</span>: <span class="text-green-400">"Bearer sc_your_key"</span>},
+    headers={<span class="text-green-400">"X-API-Key"</span>: <span class="text-green-400">"sc_your_key"</span>},
     json={
         <span class="text-green-400">"query"</span>: <span class="text-green-400">"top python web frameworks"</span>,
-        <span class="text-green-400">"extract_schema"</span>: {
+        <span class="text-green-400">"schema"</span>: {
             <span class="text-green-400">"name"</span>: <span class="text-green-400">"string"</span>,
             <span class="text-green-400">"stars"</span>: <span class="text-green-400">"number"</span>,
             <span class="text-green-400">"description"</span>: <span class="text-green-400">"string"</span>
@@ -401,16 +410,10 @@ resp = requests.post(
       <div class="tab-content" id="tab-node">
         <div class="bg-card rounded-xl border border-gray-700/50 p-6 mb-4">
           <p class="text-xs text-gray-500 mb-3 font-mono">Search Example</p>
-          <pre class="overflow-x-auto"><code class="text-sm text-gray-300"><span class="text-blue-400">const</span> resp = <span class="text-blue-400">await</span> fetch(<span class="text-green-400">"https://api.searchclaw.dev/v1/search"</span>, {
-  method: <span class="text-green-400">"POST"</span>,
+          <pre class="overflow-x-auto"><code class="text-sm text-gray-300"><span class="text-blue-400">const</span> resp = <span class="text-blue-400">await</span> fetch(<span class="text-green-400">"https://api.searchclaw.dev/v1/search?q=latest+AI+news&amp;mode=basic"</span>, {
   headers: {
-    <span class="text-green-400">"Authorization"</span>: <span class="text-green-400">"Bearer sc_your_key"</span>,
-    <span class="text-green-400">"Content-Type"</span>: <span class="text-green-400">"application/json"</span>,
+    <span class="text-green-400">"X-API-Key"</span>: <span class="text-green-400">"sc_your_key"</span>,
   },
-  body: JSON.stringify({
-    query: <span class="text-green-400">"latest AI news"</span>,
-    mode: <span class="text-green-400">"basic"</span>,
-  }),
 });
 
 <span class="text-blue-400">const</span> { results } = <span class="text-blue-400">await</span> resp.json();
@@ -421,12 +424,12 @@ results.forEach(r =&gt; console.log(r.title, r.url));</code></pre>
           <pre class="overflow-x-auto"><code class="text-sm text-gray-300"><span class="text-blue-400">const</span> resp = <span class="text-blue-400">await</span> fetch(<span class="text-green-400">"https://api.searchclaw.dev/v1/pipeline"</span>, {
   method: <span class="text-green-400">"POST"</span>,
   headers: {
-    <span class="text-green-400">"Authorization"</span>: <span class="text-green-400">"Bearer sc_your_key"</span>,
+    <span class="text-green-400">"X-API-Key"</span>: <span class="text-green-400">"sc_your_key"</span>,
     <span class="text-green-400">"Content-Type"</span>: <span class="text-green-400">"application/json"</span>,
   },
   body: JSON.stringify({
     query: <span class="text-green-400">"top python web frameworks"</span>,
-    extract_schema: {
+    schema: {
       name: <span class="text-green-400">"string"</span>,
       stars: <span class="text-green-400">"number"</span>,
       description: <span class="text-green-400">"string"</span>,
@@ -445,22 +448,17 @@ results.forEach(item =&gt;
       <div class="tab-content" id="tab-curl">
         <div class="bg-card rounded-xl border border-gray-700/50 p-6 mb-4">
           <p class="text-xs text-gray-500 mb-3 font-mono">Search Example</p>
-          <pre class="overflow-x-auto"><code class="text-sm text-gray-300">curl -X POST https://api.searchclaw.dev/v1/search \
-  -H <span class="text-green-400">"Authorization: Bearer sc_your_key"</span> \
-  -H <span class="text-green-400">"Content-Type: application/json"</span> \
-  -d <span class="text-green-400">'{
-    "query": "latest AI news",
-    "mode": "basic"
-  }'</span></code></pre>
+          <pre class="overflow-x-auto"><code class="text-sm text-gray-300">curl <span class="text-green-400">"https://api.searchclaw.dev/v1/search?q=latest+AI+news&amp;mode=basic"</span> \
+  -H <span class="text-green-400">"X-API-Key: sc_your_key"</span></code></pre>
         </div>
         <div class="bg-card rounded-xl border border-gray-700/50 p-6">
           <p class="text-xs text-gray-500 mb-3 font-mono">Pipeline Example</p>
           <pre class="overflow-x-auto"><code class="text-sm text-gray-300">curl -X POST https://api.searchclaw.dev/v1/pipeline \
-  -H <span class="text-green-400">"Authorization: Bearer sc_your_key"</span> \
+  -H <span class="text-green-400">"X-API-Key: sc_your_key"</span> \
   -H <span class="text-green-400">"Content-Type: application/json"</span> \
   -d <span class="text-green-400">'{
     "query": "top python web frameworks",
-    "extract_schema": {
+    "schema": {
       "name": "string",
       "stars": "number",
       "description": "string"
@@ -611,7 +609,7 @@ data = pipeline.invoke({
               <td class="py-3 px-4 text-gray-300 font-medium">MCP Server</td>
               <td class="py-3 px-4 text-center text-green-400">&#10003;</td>
               <td class="py-3 px-4 text-center text-green-400">&#10003;</td>
-              <td class="py-3 px-4 text-center text-red-400">&#10007;</td>
+              <td class="py-3 px-4 text-center text-green-400">&#10003;</td>
             </tr>
             <tr class="border-b border-gray-800">
               <td class="py-3 px-4 text-gray-300 font-medium">LangChain</td>
@@ -694,7 +692,7 @@ data = pipeline.invoke({
           <div class="text-3xl font-extrabold text-white mb-1">$0<span class="text-base font-normal text-gray-500">/mo</span></div>
           <p class="text-gray-500 text-sm mb-6">Get started for free</p>
           <ul class="space-y-3 text-sm text-gray-300 mb-6">
-            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 4L12 14.01l-3-3"/></svg> 1,000 credits / month</li>
+            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 4L12 14.01l-3-3"/></svg> 10,000 credits / month</li>
             <li class="flex items-center gap-2"><svg class="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 4L12 14.01l-3-3"/></svg> 1 request / second</li>
             <li class="flex items-center gap-2"><svg class="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 4L12 14.01l-3-3"/></svg> All endpoints</li>
           </ul>
@@ -752,7 +750,7 @@ data = pipeline.invoke({
       <h2 class="text-3xl sm:text-4xl font-bold text-center mb-4">
         <span class="gradient-text">Get Your API Key</span>
       </h2>
-      <p class="text-gray-400 text-center mb-8">Start with 1,000 free credits. No credit card required.</p>
+      <p class="text-gray-400 text-center mb-8">Start with 10,000 free credits. No credit card required.</p>
 
       <form id="signup-form" class="bg-card rounded-xl border border-gray-700/50 p-6 glow">
         <div class="space-y-4 mb-6">
