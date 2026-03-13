@@ -839,16 +839,28 @@ data = pipeline.invoke({
       const password = document.getElementById('password').value;
 
       try {
-        const resp = await fetch('https://api.searchclaw.dev/v1/auth/register', {
+        let resp = await fetch('https://api.searchclaw.dev/v1/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, password }),
         });
 
-        const data = await resp.json();
+        let data = await resp.json();
 
-        if (!resp.ok) {
-          throw new Error(data.error || data.message || 'Registration failed. Please try again.');
+        // If email already registered, try logging in instead
+        if (resp.status === 409) {
+          btn.textContent = 'Signing in...';
+          resp = await fetch('https://api.searchclaw.dev/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+          data = await resp.json();
+          if (!resp.ok) {
+            throw new Error(data.detail || data.error || data.message || 'Invalid password for existing account.');
+          }
+        } else if (!resp.ok) {
+          throw new Error(data.detail || data.error || data.message || 'Registration failed. Please try again.');
         }
 
         // Show success
